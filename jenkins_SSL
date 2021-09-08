@@ -1,0 +1,17 @@
+0. openssl genrsa  -out ca.key 2048
+1. openssl req  -new  -x509 -days 720 -key ca.key -subj "/C=CI/ST=MSQ/L=Minsk/O=FP, Inc./CN=FP" -out ca.crt
+
+2. openssl req  -newkey rsa:2048 -nodes -keyout server.key -subj "/C=CI/ST=MSQ/L=MSQ/O=FP, Inc./CN=ci" -out server.csr
+3. openssl x509  -req  -extfile <(printf "subjectAltName=DNS:ci,DNS:localhost") -days 365  -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt 
+
+
+4. openssl pkcs12  -export  -out jenkins.p12  -passout 'pass:111-111' -inkey server.key  -in server.crt  -certfile ca.crt  -name ci
+5. keytool  -importkeystore -srckeystore jenkins.p12 -srcstorepass '111-111' -srcstoretype PKCS12 -srcalias ci -deststoretype JKS -destkeystore jenkins.jks -deststorepass 'Jk-111-111'  -destalias ci
+
+
+
+    cd /var/lib/jenkins
+    mkdir keystore
+    cp jenkins.jks /var/lib/jenkins/keystore/
+    chown -R jenkins.jenkins keystore/
+    chmod 700 keystore/
